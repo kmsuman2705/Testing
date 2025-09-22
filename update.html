@@ -133,12 +133,61 @@ function incrementOvers(current){
   return `${o}.${b}`;
 }
 
+function addLastBall(){
+  const val = document.getElementById('lastBall').value; if(!val) return;
+  last6Balls.push(val); if(last6Balls.length>6) last6Balls.shift();
+  document.getElementById('last6').value = last6Balls.join(" ");
+
+  updateLast6Display();
+
+  let striker = "b1";
+  let batsmanRuns = document.getElementById(striker+"Runs");
+  let batsmanBalls = document.getElementById(striker+"Balls");
+  let batsmanFours = document.getElementById(striker+"Fours");
+  let batsmanSixes = document.getElementById(striker+"Sixes");
+
+  let bowlerRunsEl = document.getElementById('bowlerRuns');
+  let bowlerBallsEl = document.getElementById('bowlerOvers');
+  let bowlerWktsEl = document.getElementById('bowlerWickets');
+
+  let battingOversEl = document.getElementById('overs');
+
+  if(val.startsWith("WD") || val.startsWith("NB")) {
+    let extra = val.length>2 ? parseInt(val.slice(2)) : 0;
+    document.getElementById('runs').value = +document.getElementById('runs').value + 1 + extra;
+    if(!val.startsWith("WD")) batsmanRuns.value = +batsmanRuns.value + extra; // NB runs count
+    bowlerRunsEl.value = +bowlerRunsEl.value + (val.startsWith("WD")?1+extra:extra);
+    if(extra%2===1) swapBatsmen();
+  } 
+  else if(val==="W"){
+    document.getElementById('wickets').value++;
+    bowlerWktsEl.value++;
+    batsmanBalls.value++;
+    nextBatsman(striker==="b1"?1:2);
+    battingOversEl.value = incrementOvers(battingOversEl.value);
+    bowlerBallsEl.value = incrementOvers(bowlerBallsEl.value);
+  }
+  else if(["0","1","2","3","4","6"].includes(val)){
+    let runs = +val;
+    document.getElementById('runs').value = +document.getElementById('runs').value + runs;
+    batsmanRuns.value = +batsmanRuns.value + runs;
+    batsmanBalls.value++;
+    if(val==="4") batsmanFours.value++;
+    if(val==="6") batsmanSixes.value++;
+    if([1,3].includes(runs)) swapBatsmen();
+    battingOversEl.value = incrementOvers(battingOversEl.value);
+    bowlerBallsEl.value = incrementOvers(bowlerBallsEl.value);
+    bowlerRunsEl.value = +bowlerRunsEl.value + runs;
+  }
+  autoCalc();
+  saveData();
+}
+
 function updateLast6Display(){
   const container = document.getElementById('last6Container');
   container.innerHTML="";
   last6Balls.forEach(b=>{
-    let span = document.createElement('div');
-    span.classList.add('last6-ball');
+    let span = document.createElement('div'); span.classList.add('last6-ball');
     if(b==='0') span.classList.add('ball-0');
     else if(['1','2','3'].includes(b)) span.classList.add('ball-1');
     else if(b==='4') span.classList.add('ball-4');
@@ -150,81 +199,18 @@ function updateLast6Display(){
   });
 }
 
-function addLastBall(){
-  const lastBallSelect = document.getElementById('lastBall');
-  let val = lastBallSelect.value; if(!val) return;
-  last6Balls.push(val);
-  if(last6Balls.length>6) last6Balls.shift();
-  document.getElementById('last6').value = last6Balls.join(" ");
-  updateLast6Display();
-
-  let striker = "b1";
-  let bowlerRunsEl = document.getElementById('bowlerRuns');
-  let bowlerWktsEl = document.getElementById('bowlerWickets');
-  let bowlerOversEl = document.getElementById('bowlerOvers');
-  let battingOversEl = document.getElementById('overs');
-
-  if(val.startsWith("WD")){
-    let extra = val.length>2?parseInt(val.slice(2)):0;
-    document.getElementById('runs').value = +document.getElementById('runs').value + 1 + extra;
-    bowlerRunsEl.value = +bowlerRunsEl.value + 1 + extra;
-    if(extra%2===1) swapBatsmen();
-  }
-  else if(val.startsWith("NB")){
-    let extra = val.length>2?parseInt(val.slice(2)):0;
-    document.getElementById('runs').value = +document.getElementById('runs').value + 1 + extra;
-    if(extra>0){
-      let rEl=document.getElementById(striker+"Runs");
-      let bEl=document.getElementById(striker+"Balls");
-      rEl.value=+rEl.value + extra;
-      bEl.value=+bEl.value + 1;
-      bowlerRunsEl.value = +bowlerRunsEl.value + extra;
-    }
-    if(extra%2===1) swapBatsmen();
-    // no overs increment on NB
-  }
-  else if(val==="W" || val.startsWith("LB") || ["0","1","2","3","4","6"].includes(val)){
-    let runs = 0;
-    if(["0","1","2","3","4","6"].includes(val)){
-      runs = +val;
-      document.getElementById('runs').value = +document.getElementById('runs').value + runs;
-      let rEl = document.getElementById(striker+"Runs");
-      let bEl = document.getElementById(striker+"Balls");
-      rEl.value = +rEl.value + runs; bEl.value++;
-      if(val==="4") document.getElementById(striker+"Fours").value++;
-      if(val==="6") document.getElementById(striker+"Sixes").value++;
-      if([1,3].includes(runs)) swapBatsmen();
-    }
-    if(val==="W"){
-      document.getElementById('wickets').value++;
-      bowlerWktsEl.value++;
-      let bEl = document.getElementById(striker+"Balls"); bEl.value++;
-      nextBatsman(striker==="b1"?1:2);
-    }
-    if(val.startsWith("LB")){
-      let lb = parseInt(val.slice(2));
-      document.getElementById('runs').value = +document.getElementById('runs').value + lb;
-      let bEl=document.getElementById(striker+"Balls"); bEl.value++;
-      if(lb%2===1) swapBatsmen();
-    }
-    // increment overs for legal delivery
-    battingOversEl.value = incrementOvers(battingOversEl.value);
-    bowlerOversEl.value = incrementOvers(bowlerOversEl.value);
-  }
-
-  autoCalc();
-  saveData();
-}
-
 function saveData(){
-  let score = {
+  const score = {
     teamA: document.getElementById('teamA').value,
     teamB: document.getElementById('teamB').value,
     runs: +document.getElementById('runs').value,
     wickets: +document.getElementById('wickets').value,
     overs: document.getElementById('overs').value,
+    target: +document.getElementById('target').value || null,
+    targetOvers: +document.getElementById('targetOvers').value || null,
+    targetWickets: +document.getElementById('targetWickets').value || null,
     last6: document.getElementById('last6').value,
-    batsman1: {
+    batsman1:{
       name: document.getElementById('b1Name').value,
       runs: +document.getElementById('b1Runs').value,
       balls: +document.getElementById('b1Balls').value,
@@ -232,7 +218,7 @@ function saveData(){
       sixes: +document.getElementById('b1Sixes').value,
       sr: +document.getElementById('b1SR').value
     },
-    batsman2: {
+    batsman2:{
       name: document.getElementById('b2Name').value,
       runs: +document.getElementById('b2Runs').value,
       balls: +document.getElementById('b2Balls').value,
@@ -240,26 +226,21 @@ function saveData(){
       sixes: +document.getElementById('b2Sixes').value,
       sr: +document.getElementById('b2SR').value
     },
-    bowler: {
+    bowler:{
       name: document.getElementById('bowlerName').value,
       overs: document.getElementById('bowlerOvers').value,
       runs: +document.getElementById('bowlerRuns').value,
       wickets: +document.getElementById('bowlerWickets').value,
       eco: +document.getElementById('bowlerEco').value
-    },
-    target: +document.getElementById('target').value || null,
-    targetOvers: +document.getElementById('targetOvers').value || null,
-    targetWickets: +document.getElementById('targetWickets').value || null
+    }
   };
-
-  fetch('update.php', {
+  
+  fetch('update.php',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({score})
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    document.getElementById('status').innerText = data.message;
+    body: JSON.stringify({score}),
+    headers:{'Content-Type':'application/json'}
+  }).then(res=>res.json()).then(r=>{
+    document.getElementById('status').innerText = r.message;
   });
 }
 </script>
