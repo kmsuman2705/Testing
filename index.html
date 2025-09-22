@@ -380,7 +380,7 @@ async function fetchScore(){
 
   document.getElementById('teamA').innerText = s.teamA;
   document.getElementById('teamB').innerText = s.teamB;
-  document.getElementById('scoreDisplay').innerText = ${s.runs}/${s.wickets} (${s.overs});
+  document.getElementById('scoreDisplay').innerText = `${s.runs}/${s.wickets} (${s.overs})`;
 
   let balls = (s.last6 || "").split(" ").filter(Boolean);
   if(balls.length === 0){ balls = ["-","-","-","-","-","-"]; }
