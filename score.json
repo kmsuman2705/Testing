@@ -1,0 +1,38 @@
+{
+    "score": {
+        "teamA": "India",
+        "teamB": "Pakistan",
+        "runs": 142,
+        "wickets": 6,
+        "overs": "11.3",
+        "target": 200,
+        "targetOvers": 20,
+        "targetWickets": 5,
+        "last6": "3 1 1 4 WD W",
+        "batsman1": {
+            "name": "",
+            "runs": 0,
+            "balls": 0,
+            "fours": 0,
+            "sixes": 0,
+            "sr": 0
+        },
+        "batsman2": {
+            "name": "hardik",
+            "runs": 20,
+            "balls": 9,
+            "fours": 0,
+            "sixes": 0,
+            "sr": 222.2
+        },
+        "bowler": {
+            "name": "rohit",
+            "overs": "1.5",
+            "runs": 2,
+            "wickets": 0,
+            "eco": "1.09"
+        },
+        "crr": 12.35,
+        "rrr": 6.94
+    }
+}

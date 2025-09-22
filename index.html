@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Live Cricket Score</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {
+     margin:0; font-family:Arial,sans-serif; 
+     color:#fff; 
+     background-blend-mode: overlay;
+     background-size: cover;
+     background-position: center;
+  }
+
+  /* Marquee styling */
+  .marquee-top{
+    position: fixed;
+    top: 10px;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #bb0202, #ee1b07);
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 10px 0;
+    text-align: center;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+
+  .marquee-second{
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #bb0202, #ee1b07);
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 10px 0;
+    text-align: center;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+
+  .container {
+    max-width: 1220px;
+    margin: auto;
+    padding: 20px;
+    margin-top: 120px;
+  }
+
+  .video-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+  }
+
+  .video-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: rgba(0,0,0,0.4);
+  }
+
+  .teamscore {
+    display:flex; justify-content:space-between; align-items:center;
+    background: rgba(13, 4, 181);
+    padding:10px;
+    border-radius:10px;
+    font-size:28px;
+    font-weight:bold;
+  }
+
+  .team {
+    display:flex; align-items:center; gap:15px;
+    background: linear-gradient(135deg, #3005f4, #011a42, #410384);
+    padding: 15px 25px;
+    border-radius: 12px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    animation: pulseBox 2s infinite;
+  }
+
+  @keyframes pulseBox {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .flag, .flag2 {
+    width:80px; height:50px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    animation: wave 2s infinite ease-in-out;
+  }
+
+  .flag {
+    background-image: url("flags/india.png");
+  }
+
+  .flag2 {
+    background-image: url("flags/pak.png");
+  }
+
+  @keyframes wave {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(3deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-3deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+ .score { font-size:80px; font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: #fff;
+    background: linear-gradient(270deg,  #401744, #7d057b, #3005f4, #087327,#f9d803, #bb0202, #fb0303);
+    background-size: 400% 400%;
+    animation: gradientMove 5s ease infinite; 
+    min-width: 300px;  /* horizontal size */
+    min-height: 120px; /* vertical size */
+    display: flex;
+    justify-content: center;
+    align-items: center; /* text center me */
+    box-shadow: 0 0 25px rgba(0,0,0,0.6)}
+
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .batsmen, .bowler {
+    margin-top:10px;
+    background:#0d014e;
+    padding:10px;
+    border-radius:10px;
+    font-size:18px;
+  }
+
+  .batsmen table, .bowler table {
+    width:100%;
+    border-collapse:collapse;
+  }
+
+  th, td {
+    text-align:center;
+    padding:5px;
+  }
+
+  .highlight { background: rgba(13, 4, 181); font-weight:bold; }
+
+  .info-bar {
+    display:flex;
+    justify-content:space-around;
+    margin-top:10px;
+    background:#0d014c;
+    padding:8px;
+    border-radius:8px;
+    font-size:20px;
+  }
+
+  .last6 {
+    margin-top:10px;
+    display:flex;
+    justify-content:center;
+    gap:5px;
+    font-size:18px;
+  }
+
+  .ball {
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    font-weight:bold;
+  }
+
+  .ball-0 { background:#666; color:#fff; }
+  .ball-1, .ball-2, .ball-3 { background:#00aa66; color:#fff; }
+  .ball-4 { background:green; color:#fff; }
+  .ball-6 { background:blue; color:#fff; }
+  .ball-W { background:red; color:#fff; }
+  .ball-extra { background:yellow; color:#000; }
+
+</style>
+</head>
+<body>
+
+<!-- Background Video -->
+<video id="bgVideo" autoplay muted class="video-bg"></video>
+<div class="video-overlay"></div>
+
+<script>
+  const videoPlaylist = [
+    "images/stadium.mp4",
+    "images/stadium2.mp4"
+  ];
+
+  let currentVideo = 0;
+  const videoElement = document.getElementById("bgVideo");
+
+  videoElement.src = videoPlaylist[currentVideo];
+  videoElement.play();
+
+  videoElement.addEventListener("ended", () => {
+    currentVideo = (currentVideo + 1) % videoPlaylist.length;
+    videoElement.src = videoPlaylist[currentVideo];
+    videoElement.play();
+  });
+</script>
+
+<!-- Marquee -->
+<marquee class="marquee-top" behavior="scroll" direction="right" scrollamount="5">
+  India Vs Pakistan | Stay Tuned! Live Cricket Scores | Ball-by-Ball Commentary & Player Stats
+</marquee>
+
+<marquee class="marquee-second" behavior="scroll" direction="left" scrollamount="5">
+  Stay Tuned! Live Cricket Scores, Ball-by-Ball Commentary & Player Stats 
+</marquee>
+
+<!-- Background Audio -->
+<audio id="bgAudio" autoplay loop></audio>
+
+<!-- Play/Pause Button -->
+<button onclick="toggleAudio()" 
+        style="position:fixed;bottom:20px;right:20px;z-index:999;padding:10px 15px;border:none;border-radius:8px;background:#004080;color:#fff;cursor:pointer;">
+  🔊 Play / Pause
+</button>
+
+<script>
+  const playlist = [
+    "audio/cricket-1.mp3",
+    "audio/cricket-ball-hitting-bet-and-crowd-people-199962.mp3",
+    "audio/cricket-ground-ambience-52397.mp3"
+  ];
+
+  let currentTrack = 0;
+  const audio = document.getElementById("bgAudio");
+
+  audio.src = playlist[currentTrack];
+  audio.load();
+  audio.play();
+
+  audio.addEventListener("ended", function() {
+    currentTrack = (currentTrack + 1) % playlist.length;
+    audio.src = playlist[currentTrack];
+    audio.load();
+    audio.play();
+  });
+
+  function toggleAudio(){
+    if(audio.paused){
+      audio.play();
+    } else {
+      audio.pause();
+    }
+  }
+</script>
+
+<!-- Scoreboard -->
+<div class="container">
+  <div class="teamscore">
+    <div class="team"><div class="flag"></div><span id="teamA">Team A</span></div>
+    <div class="score" id="scoreDisplay">0/0 (0.0)</div>
+    <div class="team"><span id="teamB">Team B</span><div class="flag2"></div></div>
+  </div>
+
+  <div class="batsmen">
+    <table>
+      <thead>
+        <tr><th>Batsman</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr>
+      </thead>
+      <tbody>
+        <tr class="highlight">
+          <td id="batsman1Name">Batsman 1</td><td id="batsman1R">0</td><td id="batsman1B">0</td><td id="batsman1F">0</td><td id="batsman1S">0</td><td id="batsman1SR">0.0</td>
+        </tr>
+        <tr>
+          <td id="batsman2Name">Batsman 2</td><td id="batsman2R">0</td><td id="batsman2B">0</td><td id="batsman2F">0</td><td id="batsman2S">0</td><td id="batsman2SR">0.0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bowler">
+    <table>
+      <thead>
+        <tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>ECO</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="bowlerName">Bowler</td><td id="bowlerO">0.0</td><td id="bowlerR">0</td><td id="bowlerW">0</td><td id="bowlerEco">0.0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-bar">
+    <span id="crr">CRR: 0.00</span>
+    <span id="rrr">RRR: -</span>
+    <span id="target">Target: -</span>
+  </div>
+
+  <div class="last6" id="last6Container">- - - - - -</div>
+</div>
+
+<script>
+async function fetchScore(){
+  const res = await fetch('score.json?_=' + Date.now());
+  const data = await res.json();
+  const s = data.score;
+
+  document.getElementById('teamA').innerText = s.teamA;
+  document.getElementById('teamB').innerText = s.teamB;
+  document.getElementById('scoreDisplay').innerText = `${s.runs}/${s.wickets} (${s.overs})`;
+
+  let balls = (s.last6 || "").split(" ").filter(Boolean);
+  if(balls.length === 0){ balls = ["-","-","-","-","-","-"]; }
+
+  const last6Container = document.getElementById('last6Container');
+  last6Container.innerHTML = "";
+  balls.forEach(b => {
+    let span = document.createElement("span");
+    span.classList.add("ball");
+    if (b === "0") span.classList.add("ball-0");
+    else if (["1", "2", "3"].includes(b)) span.classList.add("ball-1");
+    else if (b === "4") span.classList.add("ball-4");
+    else if (b === "6") span.classList.add("ball-6");
+    else if (b.toUpperCase() === "W") span.classList.add("ball-W");
+    else span.classList.add("ball-extra");
+    span.innerText = b;
+    last6Container.appendChild(span);
+  });
+
+  ['1','2'].forEach(i => {
+    let b = s['batsman'+i] || {};
+    document.getElementById('batsman'+i+'Name').innerText = b.name || "-";
+    document.getElementById('batsman'+i+'R').innerText = b.runs || "0";
+    document.getElementById('batsman'+i+'B').innerText = b.balls || "0";
+    document.getElementById('batsman'+i+'F').innerText = b.fours || "0";
+    document.getElementById('batsman'+i+'S').innerText = b.sixes || "0";
+    document.getElementById('batsman'+i+'SR').innerText = b.sr || "0.0";
+  });
+
+  let b = s.bowler || {};
+  document.getElementById('bowlerName').innerText = b.name || "-";
+  document.getElementById('bowlerO').innerText = b.overs || "0.0";
+  document.getElementById('bowlerR').innerText = b.runs || "0";
+  document.getElementById('bowlerW').innerText = b.wickets || "0";
+  document.getElementById('bowlerEco').innerText = b.eco || "0.0";
+
+  let oversParts = (s.overs || "0.0").split(".");
+  let oversFloat = (+oversParts[0]) + ((+oversParts[1] || 0) / 6);
+  document.getElementById('crr').innerText = "CRR: " + (oversFloat > 0 ? (s.runs / oversFloat).toFixed(2) : "0.00");
+
+  if (s.target) {
+    let targetDisplay = s.target;
+    if (s.targetWickets) targetDisplay += "/" + s.targetWickets;
+    if (s.targetOvers) targetDisplay += ` (${s.targetOvers})`;
+    document.getElementById('target').innerText = "Target: " + targetDisplay;
+
+    let runsNeeded = s.target - s.runs + 1;
+    let totalBalls = parseFloat(s.targetOvers) * 6;
+    let ballsBowled = (+oversParts[0] * 6) + (+oversParts[1] || 0);
+    let ballsLeft = totalBalls - ballsBowled;
+    let rrr = ballsLeft > 0 ? (runsNeeded / (ballsLeft / 6)).toFixed(2) : "0.00";
+    document.getElementById('rrr').innerText = "RRR: " + rrr;
+  } else {
+    document.getElementById('target').innerText = "Target: -";
+    document.getElementById('rrr').innerText = "RRR: -";
+  }
+}
+
+fetchScore();
+setInterval(fetchScore, 3000);
+</script>
+
+</body>
+</html>
+
