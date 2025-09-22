@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+
+    environment {
+        REMOTE_USER = 'ubuntu'
+        REMOTE_HOST = '13.201.93.186'
+        REMOTE_PATH = '/var/www/html/dev'
+        GIT_REPO = 'https://github.com/kmsuman2705/Testing.git'
+        BRANCH = 'dev'
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: "${BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent (credentials: ['sumancricket']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << EOF
+                        echo "Deploying branch: ${BRANCH} to ${REMOTE_PATH}"
+                        sudo rm -rf ${REMOTE_PATH}
+                        sudo mkdir -p ${REMOTE_PATH}
+                        sudo git clone -b ${BRANCH} ${GIT_REPO} ${REMOTE_PATH}
+                        sudo chown -R www-data:www-data ${REMOTE_PATH}
+EOF
+                    """
+                }
+            }
+        }
+    }
+}
+
