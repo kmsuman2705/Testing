@@ -1,8 +1,6 @@
 <?php
-// update.php
 header('Content-Type: application/json');
 
-// Get POST data
 $data = json_decode(file_get_contents('php://input'), true);
 if (!$data || !isset($data['score'])) {
     echo json_encode(['success'=>false, 'message'=>'Invalid data']);
@@ -10,11 +8,9 @@ if (!$data || !isset($data['score'])) {
 }
 
 $score = $data['score'];
-
-// File path
 $file = 'score.json';
 
-// Load existing data
+// Load existing
 if(file_exists($file)){
     $currentData = json_decode(file_get_contents($file), true);
 } else {
@@ -28,64 +24,57 @@ if(file_exists($file)){
     ]];
 }
 
-// Update data
-$currentData['score'] = $score;
+// Keep only last 6 balls
+$last6 = array_filter(explode(" ", $score['last6'] ?? ""), fn($b)=>$b!=="");
+if(count($last6)>6) $last6 = array_slice($last6, -6);
+$score['last6'] = implode(" ", $last6);
 
-// Ensure only last 6 balls are kept
-$last6 = explode(" ", $score['last6'] ?? "");
-$last6 = array_filter($last6, function($b){ return $b !== ""; });
-if(count($last6)>6){
-    $last6 = array_slice($last6, -6);
-}
-$currentData['score']['last6'] = implode(" ", $last6);
-
-// Overs correction: legal overs
+// Correct overs
 $oversParts = explode(".", $score['overs']);
 $legalOvers = intval($oversParts[0]);
 $balls = intval($oversParts[1] ?? 0);
-$currentData['score']['overs'] = $legalOvers . "." . $balls;
+if($balls >= 6){ $legalOvers += floor($balls/6); $balls = $balls%6; }
+$score['overs'] = $legalOvers . "." . $balls;
 
 // Recalculate batsman SR
 foreach(['batsman1','batsman2'] as $b){
     $r = intval($score[$b]['runs'] ?? 0);
     $bals = intval($score[$b]['balls'] ?? 0);
-    $currentData['score'][$b]['sr'] = $bals > 0 ? round(($r / $bals) * 100, 1) : 0.0;
+    $score[$b]['sr'] = $bals>0 ? round(($r/$bals)*100,1):0.0;
 }
 
-// Calculate CRR (Current Run Rate)
-$totalOvers = $legalOvers + ($balls / 6);
-$currentData['score']['crr'] = $totalOvers > 0 ? round($score['runs'] / $totalOvers, 2) : 0.0;
+// Bowler ECO
+$bowlerParts = explode(".", $score['bowler']['overs']);
+$bowlerOvers = intval($bowlerParts[0]);
+$bowlerBalls = intval($bowlerParts[1] ?? 0);
+$totalBowlerOvers = $bowlerOvers + ($bowlerBalls/6);
+$score['bowler']['eco'] = $totalBowlerOvers>0 ? round($score['bowler']['runs']/$totalBowlerOvers,2):0.0;
 
-// Calculate RRR (Required Run Rate) if target exists
-if (isset($score['target']) && $score['target'] !== null && $score['targetOvers']) {
-    $runsLeft = $score['target'] - $score['runs'] + 1; // +1 needed to win
-    $totalBalls = intval($score['targetOvers']) * 6;
-    $ballsBowled = $legalOvers * 6 + $balls;
+// CRR
+$totalOvers = $legalOvers + ($balls/6);
+$score['crr'] = $totalOvers>0 ? round($score['runs']/$totalOvers,2):0.0;
+
+// RRR
+if(isset($score['target']) && $score['target']!==null && $score['targetOvers']){
+    $runsLeft = $score['target'] - $score['runs'] + 1;
+    $totalBalls = intval($score['targetOvers'])*6;
+    $ballsBowled = $legalOvers*6 + $balls;
     $ballsLeft = $totalBalls - $ballsBowled;
-    if ($ballsLeft > 0) {
-        $rrr = round($runsLeft / ($ballsLeft / 6), 2);
-    } else {
-        $rrr = 0.0;
-    }
-    $currentData['score']['rrr'] = $rrr;
-} else {
-    $currentData['score']['rrr'] = null;
+    $score['rrr'] = $ballsLeft>0 ? round($runsLeft/($ballsLeft/6),2):0.0;
+} else $score['rrr'] = null;
+
+// Swap batsmen if over ended
+$prevBalls = intval($oversParts[1] ?? 0);
+if($balls===0 && $prevBalls!=0){
+    $tmp = $score['batsman1'];
+    $score['batsman1'] = $score['batsman2'];
+    $score['batsman2'] = $tmp;
 }
 
-// Automatic strike swap on over start
-// If previous ball‐part was non‑zero then new over started when balls becomes 0
-// But this logic depends on what the input overs are. Using simple check:
-if ($balls == 0 && intval($oversParts[1] ?? 0) != 0) {
-    $tmp = $currentData['score']['batsman1'];
-    $currentData['score']['batsman1'] = $currentData['score']['batsman2'];
-    $currentData['score']['batsman2'] = $tmp;
-}
+// Save updated
+$currentData['score'] = $score;
+file_put_contents($file,json_encode($currentData,JSON_PRETTY_PRINT));
 
-// Save back to file
-file_put_contents($file, json_encode($currentData, JSON_PRETTY_PRINT));
-
-// Return success
-echo json_encode(['success'=>true, 'message'=>'Score updated successfully']);
+echo json_encode(['success'=>true,'message'=>'Score updated successfully']);
 exit;
 ?>
-
