@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>Live Cricket Score</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
   body {
      margin:0; font-family:Arial,sans-serif; 
@@ -81,9 +83,11 @@
   }
 
   .team {
-    display:flex; align-items:center; gap:15px;
+    display:flex; align-items:center; gap:25px;
     background: linear-gradient(135deg, #3005f4, #011a42, #410384);
-    padding: 15px 25px;
+    min-height: 110px; /* vertical size */
+    padding: 15px 30px;
+    margin: 20px;
     border-radius: 12px;
     font-size: 28px;
     font-weight: bold;
@@ -235,13 +239,31 @@
 </marquee>
 
 <!-- Background Audio -->
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <audio id="bgAudio" autoplay loop></audio>
 
-<!-- Play/Pause Button -->
-<button onclick="toggleAudio()" 
-        style="position:fixed;bottom:20px;right:20px;z-index:999;padding:10px 15px;border:none;border-radius:8px;background:#004080;color:#fff;cursor:pointer;">
-  🔊 Play / Pause
-</button>
+<!-- Audio Controls -->
+<div style="position:fixed;bottom:20px;right:20px;z-index:999;display:flex;gap:10px;">
+  <!-- Play/Pause Button -->
+  <button id="playPauseBtn" onclick="toggleAudio()" 
+        style="padding:10px 15px;border:none;border-radius:8px;background:#004080;color:#fff;cursor:pointer;">
+    <i id="playPauseIcon" class="fa-solid fa-play"></i>
+  </button>
+
+  <!-- Volume Up -->
+  <button onclick="volumeUp()" 
+          style="padding:10px 15px;border:none;border-radius:8px;background:#028a0f;color:#fff;cursor:pointer;">
+    <i class="fa-solid fa-volume-high"></i>
+  </button>
+
+  <!-- Volume Down -->
+  <button onclick="volumeDown()" 
+          style="padding:10px 15px;border:none;border-radius:8px;background:#bb0202;color:#fff;cursor:pointer;">
+    <i class="fa-solid fa-volume-low"></i>
+  </button>
+</div>
 
 <script>
   const playlist = [
@@ -252,6 +274,10 @@
 
   let currentTrack = 0;
   const audio = document.getElementById("bgAudio");
+  const playPauseIcon = document.getElementById("playPauseIcon");
+
+  // default volume 50%
+  audio.volume = 0.3; 
 
   audio.src = playlist[currentTrack];
   audio.load();
@@ -267,8 +293,35 @@
   function toggleAudio(){
     if(audio.paused){
       audio.play();
+      playPauseIcon.classList.remove("fa-play");
+      playPauseIcon.classList.add("fa-pause");
     } else {
       audio.pause();
+      playPauseIcon.classList.remove("fa-pause");
+      playPauseIcon.classList.add("fa-play");
+    }
+  }
+
+  // page load par icon set karna
+  window.addEventListener("load", () => {
+    if(audio.paused){
+      playPauseIcon.classList.add("fa-play");
+    } else {
+      playPauseIcon.classList.add("fa-pause");
+    }
+  });
+
+  // Volume Up
+  function volumeUp(){
+    if(audio.volume < 1){
+      audio.volume = Math.min(1, audio.volume + 0.1); 
+    }
+  }
+  
+  // Volume Down
+  function volumeDown(){
+    if(audio.volume > 0){
+      audio.volume = Math.max(0, audio.volume - 0.1); 
     }
   }
 </script>
@@ -327,7 +380,7 @@ async function fetchScore(){
 
   document.getElementById('teamA').innerText = s.teamA;
   document.getElementById('teamB').innerText = s.teamB;
-  document.getElementById('scoreDisplay').innerText = `${s.runs}/${s.wickets} (${s.overs})`;
+  document.getElementById('scoreDisplay').innerText = ${s.runs}/${s.wickets} (${s.overs});
 
   let balls = (s.last6 || "").split(" ").filter(Boolean);
   if(balls.length === 0){ balls = ["-","-","-","-","-","-"]; }
@@ -392,4 +445,3 @@ setInterval(fetchScore, 3000);
 
 </body>
 </html>
-
