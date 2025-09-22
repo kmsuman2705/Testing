@@ -103,176 +103,165 @@
 <script>
 let last6Balls = [];
 
-// Helper functions
-function calcSR(r, b) {
-  return b > 0 ? ((r / b) * 100).toFixed(1) : "0.0";
-}
-function calcECO(r, o) {
-  let parts = o.split(".");
-  let total = parseInt(parts[0]) + ((parseInt(parts[1] || 0)) / 6);
-  return total > 0 ? (r / total).toFixed(2) : "0.0";
-}
+function calcSR(r,b){ return b>0 ? ((r/b)*100).toFixed(1) : "0.0"; }
+function calcECO(r,o){ let p=o.split("."); let t=parseInt(p[0])+((parseInt(p[1]||0))/6); return t>0 ? (r/t).toFixed(2) : "0.0"; }
 
-function autoCalc() {
+function autoCalc(){
   document.getElementById('b1SR').value = calcSR(+document.getElementById('b1Runs').value, +document.getElementById('b1Balls').value);
   document.getElementById('b2SR').value = calcSR(+document.getElementById('b2Runs').value, +document.getElementById('b2Balls').value);
   document.getElementById('bowlerEco').value = calcECO(+document.getElementById('bowlerRuns').value, document.getElementById('bowlerOvers').value);
 }
 
-function swapBatsmen() {
-  const ids = ["Name", "Runs", "Balls", "Fours", "Sixes", "SR"];
-  let temp = {};
-  ids.forEach(f => temp[f] = document.getElementById("b1" + f).value);
-  ids.forEach(f => document.getElementById("b1" + f).value = document.getElementById("b2" + f).value);
-  ids.forEach(f => document.getElementById("b2" + f).value = temp[f]);
+function swapBatsmen(){
+  const ids=["Name","Runs","Balls","Fours","Sixes","SR"];
+  let temp={};
+  ids.forEach(f=>temp[f]=document.getElementById("b1"+f).value);
+  ids.forEach(f=>document.getElementById("b1"+f).value=document.getElementById("b2"+f).value);
+  ids.forEach(f=>document.getElementById("b2"+f).value=temp[f]);
 }
 
-function nextBatsman(num) {
-  document.getElementById(`b${num}Name`).value = "";
-  document.getElementById(`b${num}Runs`).value = 0;
-  document.getElementById(`b${num}Balls`).value = 0;
-  document.getElementById(`b${num}Fours`).value = 0;
-  document.getElementById(`b${num}Sixes`).value = 0;
-  document.getElementById(`b${num}SR`).value = "0.0";
+function nextBatsman(num){
+  ["Name","Runs","Balls","Fours","Sixes","SR"].forEach(f=>{
+    document.getElementById(`b${num}${f}`).value = (f==="Name"?"":0);
+    if(f==="SR") document.getElementById(`b${num}${f}`).value="0.0";
+  });
 }
 
-function incrementOvers(current) {
-  let [o, b] = current.split(".").map(x => parseInt(x || 0));
-  b++;
-  if (b >= 6) { o++; b = 0; }
+function incrementOvers(current){
+  let [o,b] = current.split(".").map(x=>parseInt(x||0));
+  b++; if(b>=6){ o++; b=0; }
   return `${o}.${b}`;
 }
 
-function updateLast6Display() {
+function updateLast6Display(){
   const container = document.getElementById('last6Container');
-  container.innerHTML = "";
-  last6Balls.forEach(b => {
+  container.innerHTML="";
+  last6Balls.forEach(b=>{
     let span = document.createElement('div');
     span.classList.add('last6-ball');
-    if (b === '0') span.classList.add('ball-0');
-    else if (['1','2','3'].includes(b)) span.classList.add('ball-1');
-    else if (b === '4') span.classList.add('ball-4');
-    else if (b === '6') span.classList.add('ball-6');
-    else if (b === 'W') span.classList.add('ball-W');
+    if(b==='0') span.classList.add('ball-0');
+    else if(['1','2','3'].includes(b)) span.classList.add('ball-1');
+    else if(b==='4') span.classList.add('ball-4');
+    else if(b==='6') span.classList.add('ball-6');
+    else if(b==='W') span.classList.add('ball-W');
     else span.classList.add('ball-extra');
     span.innerText = b;
     container.appendChild(span);
   });
 }
 
-function addLastBall() {
+function addLastBall(){
   const lastBallSelect = document.getElementById('lastBall');
-  let val = lastBallSelect.value;
-  if (!val) return;
+  let val = lastBallSelect.value; if(!val) return;
   last6Balls.push(val);
-  if (last6Balls.length > 6) last6Balls.shift();
+  if(last6Balls.length>6) last6Balls.shift();
   document.getElementById('last6').value = last6Balls.join(" ");
   updateLast6Display();
 
   let striker = "b1";
+  let bowlerRunsEl = document.getElementById('bowlerRuns');
+  let bowlerWktsEl = document.getElementById('bowlerWickets');
+  let bowlerOversEl = document.getElementById('bowlerOvers');
+  let battingOversEl = document.getElementById('overs');
 
-  if (val.startsWith("WD")) {
-    let extra = val.length > 2 ? parseInt(val.slice(2)) : 0;
+  if(val.startsWith("WD")){
+    let extra = val.length>2?parseInt(val.slice(2)):0;
     document.getElementById('runs').value = +document.getElementById('runs').value + 1 + extra;
-    if (extra % 2 === 1) swapBatsmen();
+    bowlerRunsEl.value = +bowlerRunsEl.value + 1 + extra;
+    if(extra%2===1) swapBatsmen();
   }
-  else if (val.startsWith("NB")) {
-    let extra = val.length > 2 ? parseInt(val.slice(2)) : 0;
+  else if(val.startsWith("NB")){
+    let extra = val.length>2?parseInt(val.slice(2)):0;
     document.getElementById('runs').value = +document.getElementById('runs').value + 1 + extra;
-    if (extra > 0) {
-      let rEl = document.getElementById(striker + "Runs");
-      let bEl = document.getElementById(striker + "Balls");
-      rEl.value = +rEl.value + extra;
-      bEl.value = +bEl.value + 1;
+    if(extra>0){
+      let rEl=document.getElementById(striker+"Runs");
+      let bEl=document.getElementById(striker+"Balls");
+      rEl.value=+rEl.value + extra;
+      bEl.value=+bEl.value + 1;
+      bowlerRunsEl.value = +bowlerRunsEl.value + extra;
     }
-    if (extra % 2 === 1) swapBatsmen();
+    if(extra%2===1) swapBatsmen();
+    // no overs increment on NB
   }
-  else if (val === "W") {
-    document.getElementById('wickets').value = +document.getElementById('wickets').value + 1;
-    let bEl = document.getElementById(striker + "Balls");
-    bEl.value = +bEl.value + 1;
-    nextBatsman(striker === "b1" ? 1 : 2);
-    document.getElementById('overs').value = incrementOvers(document.getElementById('overs').value);
-  }
-  else if (["0","1","2","3","4","6"].includes(val)) {
-    document.getElementById('runs').value = +document.getElementById('runs').value + +val;
-    let rEl = document.getElementById(striker + "Runs");
-    let bEl = document.getElementById(striker + "Balls");
-    rEl.value = +rEl.value + +val;
-    bEl.value = +bEl.value + 1;
-    if (val === "4") document.getElementById(striker + "Fours").value = +document.getElementById(striker + "Fours").value + 1;
-    if (val === "6") document.getElementById(striker + "Sixes").value = +document.getElementById(striker + "Sixes").value + 1;
-    if ([1,3].includes(+val)) swapBatsmen();
-    document.getElementById('overs').value = incrementOvers(document.getElementById('overs').value);
-  }
-  else if (val.startsWith("LB")) {
-    let lb = parseInt(val.slice(2));
-    document.getElementById('runs').value = +document.getElementById('runs').value + lb;
-    let bEl = document.getElementById(striker + "Balls");
-    bEl.value = +bEl.value + 1;
-    if (lb % 2 === 1) swapBatsmen();
-    document.getElementById('overs').value = incrementOvers(document.getElementById('overs').value);
+  else if(val==="W" || val.startsWith("LB") || ["0","1","2","3","4","6"].includes(val)){
+    let runs = 0;
+    if(["0","1","2","3","4","6"].includes(val)){
+      runs = +val;
+      document.getElementById('runs').value = +document.getElementById('runs').value + runs;
+      let rEl = document.getElementById(striker+"Runs");
+      let bEl = document.getElementById(striker+"Balls");
+      rEl.value = +rEl.value + runs; bEl.value++;
+      if(val==="4") document.getElementById(striker+"Fours").value++;
+      if(val==="6") document.getElementById(striker+"Sixes").value++;
+      if([1,3].includes(runs)) swapBatsmen();
+    }
+    if(val==="W"){
+      document.getElementById('wickets').value++;
+      bowlerWktsEl.value++;
+      let bEl = document.getElementById(striker+"Balls"); bEl.value++;
+      nextBatsman(striker==="b1"?1:2);
+    }
+    if(val.startsWith("LB")){
+      let lb = parseInt(val.slice(2));
+      document.getElementById('runs').value = +document.getElementById('runs').value + lb;
+      let bEl=document.getElementById(striker+"Balls"); bEl.value++;
+      if(lb%2===1) swapBatsmen();
+    }
+    // increment overs for legal delivery
+    battingOversEl.value = incrementOvers(battingOversEl.value);
+    bowlerOversEl.value = incrementOvers(bowlerOversEl.value);
   }
 
   autoCalc();
   saveData();
 }
 
-async function saveData(){
-  autoCalc();
-  let payload = {
-    score:{
-      teamA: document.getElementById('teamA').value,
-      teamB: document.getElementById('teamB').value,
-      runs: +document.getElementById('runs').value,
-      wickets: +document.getElementById('wickets').value,
-      overs: document.getElementById('overs').value,
-      target: document.getElementById('target').value ? +document.getElementById('target').value : null,
-      targetOvers: document.getElementById('targetOvers').value ? +document.getElementById('targetOvers').value : null,
-      targetWickets: document.getElementById('targetWickets').value ? +document.getElementById('targetWickets').value : null,
-      last6: document.getElementById('last6').value,
-      batsman1:{
-        name: document.getElementById('b1Name').value,
-        runs: +document.getElementById('b1Runs').value,
-        balls: +document.getElementById('b1Balls').value,
-        fours: +document.getElementById('b1Fours').value,
-        sixes: +document.getElementById('b1Sixes').value,
-        sr: document.getElementById('b1SR').value
-      },
-      batsman2:{
-        name: document.getElementById('b2Name').value,
-        runs: +document.getElementById('b2Runs').value,
-        balls: +document.getElementById('b2Balls').value,
-        fours: +document.getElementById('b2Fours').value,
-        sixes: +document.getElementById('b2Sixes').value,
-        sr: document.getElementById('b2SR').value
-      },
-      bowler:{
-        name: document.getElementById('bowlerName').value,
-        overs: document.getElementById('bowlerOvers').value,
-        runs: +document.getElementById('bowlerRuns').value,
-        wickets: +document.getElementById('bowlerWickets').value,
-        eco: document.getElementById('bowlerEco').value
-      }
-    }
+function saveData(){
+  let score = {
+    teamA: document.getElementById('teamA').value,
+    teamB: document.getElementById('teamB').value,
+    runs: +document.getElementById('runs').value,
+    wickets: +document.getElementById('wickets').value,
+    overs: document.getElementById('overs').value,
+    last6: document.getElementById('last6').value,
+    batsman1: {
+      name: document.getElementById('b1Name').value,
+      runs: +document.getElementById('b1Runs').value,
+      balls: +document.getElementById('b1Balls').value,
+      fours: +document.getElementById('b1Fours').value,
+      sixes: +document.getElementById('b1Sixes').value,
+      sr: +document.getElementById('b1SR').value
+    },
+    batsman2: {
+      name: document.getElementById('b2Name').value,
+      runs: +document.getElementById('b2Runs').value,
+      balls: +document.getElementById('b2Balls').value,
+      fours: +document.getElementById('b2Fours').value,
+      sixes: +document.getElementById('b2Sixes').value,
+      sr: +document.getElementById('b2SR').value
+    },
+    bowler: {
+      name: document.getElementById('bowlerName').value,
+      overs: document.getElementById('bowlerOvers').value,
+      runs: +document.getElementById('bowlerRuns').value,
+      wickets: +document.getElementById('bowlerWickets').value,
+      eco: +document.getElementById('bowlerEco').value
+    },
+    target: +document.getElementById('target').value || null,
+    targetOvers: +document.getElementById('targetOvers').value || null,
+    targetWickets: +document.getElementById('targetWickets').value || null
   };
 
-  try {
-    let res = await fetch("update.php", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
-    });
-    let result = await res.json();
-    document.getElementById('status').innerText = result.success ? "✅ Score Updated!" : "❌ Error: " + (result.message || "Unknown");
-  } catch (e) {
-    document.getElementById('status').innerText = "❌ Error!";
-    console.error(e);
-  }
+  fetch('update.php', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({score})
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    document.getElementById('status').innerText = data.message;
+  });
 }
-
-document.querySelectorAll("input").forEach(inp => inp.addEventListener("input", autoCalc));
 </script>
 </body>
 </html>
-
