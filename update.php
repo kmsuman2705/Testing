@@ -29,60 +29,53 @@ if(file_exists($file)){
     ]];
 }
 
-// Process last6 balls - keep only last 6 balls
-$last6Balls = preg_split('/\s+/', trim($score['last6'] ?? ''));
-$last6Balls = array_filter($last6Balls, fn($b) => $b !== '');
-if (count($last6Balls) > 6) {
-    $last6Balls = array_slice($last6Balls, -6);
-}
-$score['last6'] = implode(" ", $last6Balls);
+// Ensure last 6 balls only
+$last6 = explode(" ", $score['last6'] ?? "");
+$last6 = array_filter($last6, fn($b)=>$b!=="");
+if(count($last6)>6) $last6 = array_slice($last6, -6);
+$score['last6'] = implode(" ", $last6);
 
-// Parse overs properly for total legal balls
-function parseOvers($overs) {
-    $parts = explode('.', $overs);
-    $o = intval($parts[0]);
-    $b = intval($parts[1] ?? 0);
-    if ($b > 5) $b = 5; // max 5 balls in an over
-    return [$o, $b];
-}
+// Overs correction
+$oversParts = explode(".", $score['overs']);
+$legalOvers = intval($oversParts[0]);
+$balls = intval($oversParts[1] ?? 0);
+$score['overs'] = $legalOvers . "." . $balls;
 
-// Calculate total balls from overs string "x.y"
-list($legalOvers, $balls) = parseOvers($score['overs']);
-$totalBalls = $legalOvers * 6 + $balls;
-
-// Recalculate batsmen SR (strike rate)
-foreach (['batsman1', 'batsman2'] as $bat) {
-    $runs = intval($score[$bat]['runs'] ?? 0);
-    $ballsB = intval($score[$bat]['balls'] ?? 0);
-    $score[$bat]['sr'] = $ballsB > 0 ? round(($runs / $ballsB) * 100, 1) : 0.0;
+// Recalculate batsman SR
+foreach(['batsman1','batsman2'] as $b){
+    $runs = intval($score[$b]['runs'] ?? 0);
+    $ballsB = intval($score[$b]['balls'] ?? 0);
+    $score[$b]['sr'] = $ballsB>0 ? round(($runs/$ballsB)*100,1):0.0;
 }
 
-// Calculate CRR (Current Run Rate)
-$totalOversDecimal = $legalOvers + ($balls / 6);
-$score['crr'] = $totalOversDecimal > 0 ? round($score['runs'] / $totalOversDecimal, 2) : 0.0;
+// Calculate CRR
+$totalOvers = $legalOvers + ($balls/6);
+$score['crr'] = $totalOvers>0 ? round($score['runs'] / $totalOvers,2):0.0;
 
-// Calculate RRR (Required Run Rate) if target set
-if (isset($score['target']) && $score['target'] !== null && isset($score['targetOvers']) && $score['targetOvers'] > 0) {
+// Calculate RRR
+if(isset($score['target']) && $score['target']!==null && isset($score['targetOvers']) && $score['targetOvers']>0){
     $runsLeft = $score['target'] - $score['runs'] + 1;
-    $targetOversInt = intval($score['targetOvers']);
-    $totalTargetBalls = $targetOversInt * 6;
-    $ballsLeft = $totalTargetBalls - $totalBalls;
-    $score['rrr'] = $ballsLeft > 0 ? round($runsLeft / ($ballsLeft / 6), 2) : 0.0;
+    $totalBalls = intval($score['targetOvers'])*6;
+    $ballsBowled = $legalOvers*6 + $balls;
+    $ballsLeft = $totalBalls - $ballsBowled;
+    $score['rrr'] = $ballsLeft>0 ? round($runsLeft/($ballsLeft/6),2):0.0;
 } else {
     $score['rrr'] = null;
 }
 
-// Calculate bowler economy
-list($bowlerOvers, $bowlerBalls) = parseOvers($score['bowler']['overs']);
-$totalBowlerOversDecimal = $bowlerOvers + ($bowlerBalls / 6);
-$bowlerRuns = intval($score['bowler']['runs'] ?? 0);
-$score['bowler']['eco'] = $totalBowlerOversDecimal > 0 ? round($bowlerRuns / $totalBowlerOversDecimal, 2) : 0.0;
+// Recalculate bowler economy
+$bowlerOversParts = explode(".", $score['bowler']['overs']);
+$bowlerLegalOvers = intval($bowlerOversParts[0]);
+$bowlerBalls = intval($bowlerOversParts[1] ?? 0);
+$totalBowlerOvers = $bowlerLegalOvers + ($bowlerBalls/6);
+$score['bowler']['eco'] = $totalBowlerOvers>0 ? round($score['bowler']['runs'] / $totalBowlerOvers,2):0.0;
 
-// Save the updated score data back to file
+// Update main data
 $currentData['score'] = $score;
+
+// Save back to file
 file_put_contents($file, json_encode($currentData, JSON_PRETTY_PRINT));
 
-// Return success response
-echo json_encode(['success' => true, 'message' => 'Score updated successfully']);
+// Return success
+echo json_encode(['success'=>true,'message'=>'Score updated successfully']);
 exit;
-?>
