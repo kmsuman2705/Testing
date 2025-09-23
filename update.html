@@ -1,282 +1,209 @@
+<!-- Full corrected update.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Score Update</title>
-    <style>
-        /* Basic styling */
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        input, select { margin: 5px 0; padding: 5px; width: 100%; max-width: 200px; }
-        label { display: block; margin-top: 10px; }
-        button { margin-top: 20px; padding: 10px 20px; }
-        .container { max-width: 600px; margin: auto; }
-    </style>
+  <title>Update Live Score</title>
+  <meta charset="UTF-8">
+  <style>
+    body { background:#001f3f; font-family:Arial,sans-serif; color:#fff; padding:10px; }
+    table { border-collapse:collapse; width:100%; margin-bottom:10px; }
+    th, td { border:1px solid #444; padding:5px; text-align:center; }
+    input, select { width:80px; padding:4px; text-align:center; }
+    button { padding:6px 10px; margin:4px; border:none; border-radius:5px; cursor:pointer; background:#0074D9; color:#fff; font-weight:bold; }
+    button:hover { background:#005fa3; }
+    .swap-btn { background:#FF851B; }
+    .next-btn { background:#2ECC40; }
+    h3 { margin-top:20px; }
+    .last6-display { display:flex; justify-content:center; gap:5px; margin-top:5px; }
+    .last6-ball { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; }
+    .ball-0 { background:#666; color:#fff; }
+    .ball-1, .ball-2, .ball-3 { background:#00aa66; color:#fff; }
+    .ball-4 { background:green; color:#fff; }
+    .ball-6 { background:blue; color:#fff; }
+    .ball-W { background:red; color:#fff; }
+    .ball-extra { background:yellow; color:#000; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Update Score</h2>
-        <form id="scoreForm">
-            <!-- Team Names -->
-            <label>Team A Name:
-                <input type="text" id="teamA" required />
-            </label>
-            <label>Team B Name:
-                <input type="text" id="teamB" required />
-            </label>
+<h2>Update Live Score</h2>
 
-            <!-- Score Inputs -->
-            <label>Total Runs:
-                <input type="number" id="runs" min="0" required />
-            </label>
-            <label>Wickets:
-                <input type="number" id="wickets" min="0" max="10" required />
-            </label>
-            <label>Overs (format 10.3 means 10 overs 3 balls):
-                <input type="text" id="overs" pattern="^\d+(\.\d)?$" title="Format: number.number (e.g., 10.3)" required />
-            </label>
+<!-- Match Info Table -->
+<table>
+<tr>
+  <th>Team A</th><th>Team B</th><th>Runs</th><th>Wickets</th><th>Overs</th>
+  <th>Target</th><th>Target Overs</th><th>Target Wkts</th><th>Last 6 Balls</th>
+</tr>
+<tr>
+  <td><input id="teamA"></td>
+  <td><input id="teamB"></td>
+  <td><input type="number" id="runs" value="0"></td>
+  <td><input type="number" id="wickets" value="0"></td>
+  <td><input id="overs" value="0.0"></td>
+  <td><input type="number" id="target"></td>
+  <td><input type="number" id="targetOvers"></td>
+  <td><input type="number" id="targetWickets"></td>
+  <td>
+    <div class="last6-display" id="last6Container"></div>
+    <input type="hidden" id="last6">
+  </td>
+</tr>
+</table>
 
-            <!-- Last 6 balls -->
-            <label>Last 6 Balls (space separated):
-                <input type="text" id="last6" placeholder="e.g., 1 0 W 4 NB 6" />
-            </label>
+<!-- Batsman Info -->
+<table>
+<tr>
+  <th colspan="6">Batsman 1</th><th colspan="6">Batsman 2</th>
+</tr>
+<tr>
+  <td>Name</td><td>R</td><td>B</td><td>4s</td><td>6s</td><td>SR</td>
+  <td>Name</td><td>R</td><td>B</td><td>4s</td><td>6s</td><td>SR</td>
+</tr>
+<tr>
+  <td><input id="b1Name" type="text"></td><td><input id="b1Runs" type="number" value="0"></td>
+  <td><input id="b1Balls" type="number" value="0"></td><td><input id="b1Fours" type="number" value="0"></td>
+  <td><input id="b1Sixes" type="number" value="0"></td><td><input id="b1SR" readonly></td>
 
-            <!-- Batsman 1 -->
-            <fieldset>
-                <legend>Batsman 1</legend>
-                <label>Name:
-                    <input type="text" id="batsman1Name" required />
-                </label>
-                <label>Runs:
-                    <input type="number" id="batsman1Runs" min="0" required />
-                </label>
-                <label>Balls:
-                    <input type="number" id="batsman1Balls" min="0" required />
-                </label>
-                <label>Fours:
-                    <input type="number" id="batsman1Fours" min="0" required />
-                </label>
-                <label>Sixes:
-                    <input type="number" id="batsman1Sixes" min="0" required />
-                </label>
-                <label>Strike Rate:
-                    <input type="number" step="0.1" id="batsman1Sr" readonly />
-                </label>
-            </fieldset>
+  <td><input id="b2Name" type="text"></td><td><input id="b2Runs" type="number" value="0"></td>
+  <td><input id="b2Balls" type="number" value="0"></td><td><input id="b2Fours" type="number" value="0"></td>
+  <td><input id="b2Sixes" type="number" value="0"></td><td><input id="b2SR" readonly></td>
+</tr>
+</table>
 
-            <!-- Batsman 2 -->
-            <fieldset>
-                <legend>Batsman 2</legend>
-                <label>Name:
-                    <input type="text" id="batsman2Name" required />
-                </label>
-                <label>Runs:
-                    <input type="number" id="batsman2Runs" min="0" required />
-                </label>
-                <label>Balls:
-                    <input type="number" id="batsman2Balls" min="0" required />
-                </label>
-                <label>Fours:
-                    <input type="number" id="batsman2Fours" min="0" required />
-                </label>
-                <label>Sixes:
-                    <input type="number" id="batsman2Sixes" min="0" required />
-                </label>
-                <label>Strike Rate:
-                    <input type="number" step="0.1" id="batsman2Sr" readonly />
-                </label>
-            </fieldset>
+<!-- Bowler Info -->
+<table>
+<tr><th>Name</th><th>Overs</th><th>Runs</th><th>Wkts</th><th>ECO</th></tr>
+<tr>
+  <td><input id="bowlerName" type="text"></td>
+  <td><input id="bowlerOvers" value="0.0"></td>
+  <td><input type="number" id="bowlerRuns" value="0"></td>
+  <td><input type="number" id="bowlerWickets" value="0"></td>
+  <td><input id="bowlerEco" readonly></td>
+</tr>
+</table>
 
-            <!-- Bowler -->
-            <fieldset>
-                <legend>Bowler</legend>
-                <label>Name:
-                    <input type="text" id="bowlerName" required />
-                </label>
-                <label>Overs (format 4.3 means 4 overs and 3 balls):
-                    <input type="text" id="bowlerOvers" pattern="^\d+(\.\d)?$" title="Format: number.number (e.g., 4.3)" required />
-                </label>
-                <label>Runs Given:
-                    <input type="number" id="bowlerRuns" min="0" required />
-                </label>
-                <label>Wickets:
-                    <input type="number" id="bowlerWickets" min="0" max="10" required />
-                </label>
-                <label>Economy Rate:
-                    <input type="number" step="0.01" id="bowlerEco" readonly />
-                </label>
-            </fieldset>
+<!-- Buttons -->
+<button class="swap-btn" onclick="swapBatsmen()">Swap Batsmen</button>
+<button class="next-btn" onclick="nextBatsman(1)">Next Batsman 1</button>
+<button class="next-btn" onclick="nextBatsman(2)">Next Batsman 2</button>
+<button onclick="saveData()">Save Score</button>
 
-            <!-- Target -->
-            <label>Target Runs (if chase):
-                <input type="number" id="target" min="0" />
-            </label>
-            <label>Target Wickets (if chase):
-                <input type="number" id="targetWickets" min="0" max="10" />
-            </label>
-            <label>Target Overs (if chase):
-                <input type="number" id="targetOvers" min="0" />
-            </label>
+<h3>Quick Update - Last Ball</h3>
+<select id="lastBall">
+  <option value="">Select Ball</option>
+  <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+  <option value="4">4</option><option value="6">6</option><option value="W">Wicket</option>
+  <option value="WD">WD+0</option><option value="WD1">WD+1</option><option value="WD2">WD+2</option><option value="WD3">WD+3</option><option value="WD4">WD+4</option>
+  <option value="NB">NB+0</option><option value="NB1">NB+1</option><option value="NB2">NB+2</option><option value="NB3">NB+3</option><option value="NB4">NB+4</option><option value="NB6">NB+6</option>
+  <option value="LB1">LB1</option><option value="LB2">LB2</option><option value="LB3">LB3</option><option value="LB4">LB4</option>
+</select>
+<button onclick="addLastBall()">Add Last Ball</button>
 
-            <!-- Current Run Rate and Required Run Rate -->
-            <label>Current Run Rate:
-                <input type="number" step="0.01" id="crr" readonly />
-            </label>
-            <label>Required Run Rate:
-                <input type="number" step="0.01" id="rrr" readonly />
-            </label>
+<p id="status"></p>
 
-            <button type="submit">Update Score</button>
-        </form>
+<script>
+let last6Balls = [];
 
-        <div id="message"></div>
-    </div>
+function calcSR(r,b){ return b>0 ? ((r/b)*100).toFixed(1) : "0.0"; }
+function calcECO(r,o){ let p=o.split("."); let t=parseInt(p[0])+((parseInt(p[1]||0))/6); return t>0 ? (r/t).toFixed(2) : "0.0"; }
 
-    <script>
-        function calculateStrikeRate(runs, balls) {
-            return balls > 0 ? ((runs / balls) * 100).toFixed(1) : 0.0;
-        }
+function autoCalc(){
+  document.getElementById('b1SR').value = calcSR(+document.getElementById('b1Runs').value, +document.getElementById('b1Balls').value);
+  document.getElementById('b2SR').value = calcSR(+document.getElementById('b2Runs').value, +document.getElementById('b2Balls').value);
+  document.getElementById('bowlerEco').value = calcECO(+document.getElementById('bowlerRuns').value, document.getElementById('bowlerOvers').value);
+}
 
-        function calculateEconomy(runs, overs) {
-            if (!overs) return 0.0;
-            const parts = overs.split('.');
-            const fullOvers = parseInt(parts[0]) || 0;
-            const balls = parseInt(parts[1]) || 0;
-            const totalOvers = fullOvers + balls / 6;
-            return totalOvers > 0 ? (runs / totalOvers).toFixed(2) : 0.0;
-        }
+function swapBatsmen(){
+  const ids=["Name","Runs","Balls","Fours","Sixes","SR"];
+  let temp={};
+  ids.forEach(f=>temp[f]=document.getElementById("b1"+f).value);
+  ids.forEach(f=>{
+    document.getElementById("b1"+f).value=document.getElementById("b2"+f).value;
+    document.getElementById("b2"+f).value=temp[f];
+  });
+}
 
-        function calculateCRR(runs, overs) {
-            if (!overs) return 0.0;
-            const parts = overs.split('.');
-            const fullOvers = parseInt(parts[0]) || 0;
-            const balls = parseInt(parts[1]) || 0;
-            const totalOvers = fullOvers + balls / 6;
-            return totalOvers > 0 ? (runs / totalOvers).toFixed(2) : 0.0;
-        }
+function nextBatsman(num){
+  let fields=["Name","Runs","Balls","Fours","Sixes","SR"];
+  fields.forEach(f=>document.getElementById("b"+num+f).value=(f=="SR"?"0.0":""));
+}
 
-        function calculateRRR(runs, target, overs, targetOvers) {
-            if (!target || !targetOvers || !overs) return null;
-            const parts = overs.split('.');
-            const fullOvers = parseInt(parts[0]) || 0;
-            const balls = parseInt(parts[1]) || 0;
-            const ballsBowled = fullOvers * 6 + balls;
+function addLastBall(){
+  let val = document.getElementById('lastBall').value;
+  if(val==="") return;
+  if(last6Balls.length>=6) last6Balls.shift();
+  last6Balls.push(val);
+  document.getElementById('last6').value = last6Balls.join(" ");
+  renderLast6();
+  document.getElementById('lastBall').value="";
+}
 
-            const totalBalls = targetOvers * 6;
-            const ballsLeft = totalBalls - ballsBowled;
-            const runsLeft = target - runs + 1;
+function renderLast6(){
+  let container = document.getElementById("last6Container");
+  container.innerHTML = "";
+  last6Balls.forEach(b=>{
+    let div=document.createElement("div");
+    div.className="last6-ball";
+    if(b=="0") div.classList.add("ball-0");
+    else if(["1","2","3"].includes(b)) div.classList.add("ball-1");
+    else if(b=="4") div.classList.add("ball-4");
+    else if(b=="6") div.classList.add("ball-6");
+    else if(b=="W") div.classList.add("ball-W");
+    else div.classList.add("ball-extra");
+    div.innerText = b;
+    container.appendChild(div);
+  });
+}
 
-            if (ballsLeft <= 0) return 0.0;
-            return (runsLeft / (ballsLeft / 6)).toFixed(2);
-        }
+function saveData(){
+  autoCalc();
+  const data = {
+    teamA: document.getElementById('teamA').value,
+    teamB: document.getElementById('teamB').value,
+    runs: +document.getElementById('runs').value,
+    wickets: +document.getElementById('wickets').value,
+    overs: document.getElementById('overs').value,
+    last6: document.getElementById('last6').value,
+    batsman1: {
+      name: document.getElementById('b1Name').value,
+      runs: +document.getElementById('b1Runs').value,
+      balls: +document.getElementById('b1Balls').value,
+      fours: +document.getElementById('b1Fours').value,
+      sixes: +document.getElementById('b1Sixes').value,
+      sr: +document.getElementById('b1SR').value,
+    },
+    batsman2: {
+      name: document.getElementById('b2Name').value,
+      runs: +document.getElementById('b2Runs').value,
+      balls: +document.getElementById('b2Balls').value,
+      fours: +document.getElementById('b2Fours').value,
+      sixes: +document.getElementById('b2Sixes').value,
+      sr: +document.getElementById('b2SR').value,
+    },
+    bowler: {
+      name: document.getElementById('bowlerName').value,
+      overs: document.getElementById('bowlerOvers').value,
+      runs: +document.getElementById('bowlerRuns').value,
+      wickets: +document.getElementById('bowlerWickets').value,
+      eco: +document.getElementById('bowlerEco').value,
+    },
+    target: +document.getElementById('target').value || null,
+    targetOvers: +document.getElementById('targetOvers').value || null,
+    targetWickets: +document.getElementById('targetWickets').value || null
+  };
 
-        document.getElementById('scoreForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            // Gather inputs
-            const teamA = document.getElementById('teamA').value.trim();
-            const teamB = document.getElementById('teamB').value.trim();
-            const runs = parseInt(document.getElementById('runs').value) || 0;
-            const wickets = parseInt(document.getElementById('wickets').value) || 0;
-            const overs = document.getElementById('overs').value.trim();
-            const last6 = document.getElementById('last6').value.trim();
-
-            // Batsman 1
-            const batsman1Name = document.getElementById('batsman1Name').value.trim();
-            const batsman1Runs = parseInt(document.getElementById('batsman1Runs').value) || 0;
-            const batsman1Balls = parseInt(document.getElementById('batsman1Balls').value) || 0;
-            const batsman1Fours = parseInt(document.getElementById('batsman1Fours').value) || 0;
-            const batsman1Sixes = parseInt(document.getElementById('batsman1Sixes').value) || 0;
-
-            // Batsman 2
-            const batsman2Name = document.getElementById('batsman2Name').value.trim();
-            const batsman2Runs = parseInt(document.getElementById('batsman2Runs').value) || 0;
-            const batsman2Balls = parseInt(document.getElementById('batsman2Balls').value) || 0;
-            const batsman2Fours = parseInt(document.getElementById('batsman2Fours').value) || 0;
-            const batsman2Sixes = parseInt(document.getElementById('batsman2Sixes').value) || 0;
-
-            // Bowler
-            const bowlerName = document.getElementById('bowlerName').value.trim();
-            const bowlerOvers = document.getElementById('bowlerOvers').value.trim();
-            const bowlerRuns = parseInt(document.getElementById('bowlerRuns').value) || 0;
-            const bowlerWickets = parseInt(document.getElementById('bowlerWickets').value) || 0;
-
-            // Target
-            const target = parseInt(document.getElementById('target').value) || null;
-            const targetWickets = parseInt(document.getElementById('targetWickets').value) || null;
-            const targetOvers = parseInt(document.getElementById('targetOvers').value) || null;
-
-            // Calculate strike rates
-            const batsman1Sr = calculateStrikeRate(batsman1Runs, batsman1Balls);
-            const batsman2Sr = calculateStrikeRate(batsman2Runs, batsman2Balls);
-            document.getElementById('batsman1Sr').value = batsman1Sr;
-            document.getElementById('batsman2Sr').value = batsman2Sr;
-
-            // Calculate economy
-            const bowlerEco = calculateEconomy(bowlerRuns, bowlerOvers);
-            document.getElementById('bowlerEco').value = bowlerEco;
-
-            // Calculate CRR and RRR
-            const crr = calculateCRR(runs, overs);
-            const rrr = calculateRRR(runs, target, overs, targetOvers);
-            document.getElementById('crr').value = crr;
-            document.getElementById('rrr').value = rrr !== null ? rrr : '';
-
-            // Prepare data object
-            const scoreData = {
-                teamA,
-                teamB,
-                runs,
-                wickets,
-                overs,
-                last6,
-                batsman1: {
-                    name: batsman1Name,
-                    runs: batsman1Runs,
-                    balls: batsman1Balls,
-                    fours: batsman1Fours,
-                    sixes: batsman1Sixes,
-                    sr: parseFloat(batsman1Sr)
-                },
-                batsman2: {
-                    name: batsman2Name,
-                    runs: batsman2Runs,
-                    balls: batsman2Balls,
-                    fours: batsman2Fours,
-                    sixes: batsman2Sixes,
-                    sr: parseFloat(batsman2Sr)
-                },
-                bowler: {
-                    name: bowlerName,
-                    overs: bowlerOvers,
-                    runs: bowlerRuns,
-                    wickets: bowlerWickets,
-                    eco: parseFloat(bowlerEco)
-                },
-                target,
-                targetWickets,
-                targetOvers,
-                crr: parseFloat(crr),
-                rrr: rrr !== null ? parseFloat(rrr) : null
-            };
-
-            fetch('update.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ score: scoreData })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('message').textContent = 'Score updated successfully!';
-                    } else {
-                        document.getElementById('message').textContent = 'Error: ' + data.message;
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('message').textContent = 'Fetch error: ' + err.message;
-                });
-        });
-    </script>
+  fetch('update.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ score: data })
+  })
+  .then(res=>res.json())
+  .then(resp=>{
+    document.getElementById('status').innerText = resp.success ? "✅ Score Updated" : "❌ Error: "+resp.message;
+  })
+  .catch(err=>{
+    document.getElementById('status').innerText = "❌ Network error";
+  });
+}
+</script>
 </body>
 </html>
