@@ -79,4 +79,3 @@ file_put_contents($file, json_encode($currentData, JSON_PRETTY_PRINT));
 // Return success
 echo json_encode(['success'=>true,'message'=>'Score updated successfully']);
 exit;
-?>

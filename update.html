@@ -95,6 +95,8 @@
   <option value="WD">WD+0</option><option value="WD1">WD+1</option><option value="WD2">WD+2</option><option value="WD3">WD+3</option><option value="WD4">WD+4</option>
   <option value="NB">NB+0</option><option value="NB1">NB+1</option><option value="NB2">NB+2</option><option value="NB3">NB+3</option><option value="NB4">NB+4</option><option value="NB6">NB+6</option>
   <option value="LB1">Leg Bye 1</option><option value="LB2">Leg Bye 2</option>
+  <option value="LB3">Leg Bye 3</option>
+  <option value="LB4">Leg Bye 4</option>
 </select>
 <button onclick="addLastBall()">Add Last Ball</button>
 
@@ -155,7 +157,7 @@ function addLastBall(){
   if(val.startsWith("WD") || val.startsWith("NB")) {
     let extra = val.length>2 ? parseInt(val.slice(2)) : 0;
     document.getElementById('runs').value = +document.getElementById('runs').value + 1 + extra;
-    if(!val.startsWith("WD")) batsmanRuns.value = +batsmanRuns.value + extra; // NB runs count
+    if(!val.startsWith("WD")) batsmanRuns.value = +batsmanRuns.value + extra; // NB runs count for batsman
     bowlerRunsEl.value = +bowlerRunsEl.value + (val.startsWith("WD")?1+extra:extra);
     if(extra%2===1) swapBatsmen();
   } 
@@ -179,6 +181,15 @@ function addLastBall(){
     bowlerBallsEl.value = incrementOvers(bowlerBallsEl.value);
     bowlerRunsEl.value = +bowlerRunsEl.value + runs;
   }
+
+  else if(val.startsWith("LB")){
+  let extra = parseInt(val.slice(2)) || 0;
+  document.getElementById('runs').value = +document.getElementById('runs').value + extra;
+  batsmanBalls.value++;
+  battingOversEl.value = incrementOvers(battingOversEl.value);
+  bowlerBallsEl.value = incrementOvers(bowlerBallsEl.value);
+  // No runs to batsman, but count balls and runs in total
+}
   autoCalc();
   saveData();
 }
@@ -241,7 +252,10 @@ function saveData(){
     headers:{'Content-Type':'application/json'}
   }).then(res=>res.json()).then(r=>{
     document.getElementById('status').innerText = r.message;
+  }).catch(e=>{
+    document.getElementById('status').innerText = 'Error saving data';
   });
 }
 </script>
 </body>
+</html>
