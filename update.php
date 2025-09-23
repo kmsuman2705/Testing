@@ -20,7 +20,8 @@ if(file_exists($file)){
 } else {
     $currentData = ['score'=>[
         'teamA'=>'Team A','teamB'=>'Team B','runs'=>0,'wickets'=>0,'overs'=>'0.0',
-        'last6'=>'','batsman1'=>['name'=>'','runs'=>0,'balls'=>0,'fours'=>0,'sixes'=>0,'sr'=>0.0],
+        'last6'=>'',
+        'batsman1'=>['name'=>'','runs'=>0,'balls'=>0,'fours'=>0,'sixes'=>0,'sr'=>0.0],
         'batsman2'=>['name'=>'','runs'=>0,'balls'=>0,'fours'=>0,'sixes'=>0,'sr'=>0.0],
         'bowler'=>['name'=>'','overs'=>'0.0','runs'=>0,'wickets'=>0,'eco'=>0.0],
         'target'=>null,'targetWickets'=>null,'targetOvers'=>null,
@@ -28,64 +29,53 @@ if(file_exists($file)){
     ]];
 }
 
-// Update data
-$currentData['score'] = $score;
-
-// Ensure only last 6 balls are kept
+// Ensure last 6 balls only
 $last6 = explode(" ", $score['last6'] ?? "");
-$last6 = array_filter($last6, function($b){ return $b !== ""; });
-if(count($last6)>6){
-    $last6 = array_slice($last6, -6);
-}
-$currentData['score']['last6'] = implode(" ", $last6);
+$last6 = array_filter($last6, fn($b)=>$b!=="");
+if(count($last6)>6) $last6 = array_slice($last6, -6);
+$score['last6'] = implode(" ", $last6);
 
-// Overs correction: legal overs
+// Overs correction
 $oversParts = explode(".", $score['overs']);
 $legalOvers = intval($oversParts[0]);
 $balls = intval($oversParts[1] ?? 0);
-$currentData['score']['overs'] = $legalOvers . "." . $balls;
+$score['overs'] = $legalOvers . "." . $balls;
 
 // Recalculate batsman SR
 foreach(['batsman1','batsman2'] as $b){
-    $r = intval($score[$b]['runs'] ?? 0);
-    $bals = intval($score[$b]['balls'] ?? 0);
-    $currentData['score'][$b]['sr'] = $bals > 0 ? round(($r / $bals) * 100, 1) : 0.0;
+    $runs = intval($score[$b]['runs'] ?? 0);
+    $ballsB = intval($score[$b]['balls'] ?? 0);
+    $score[$b]['sr'] = $ballsB>0 ? round(($runs/$ballsB)*100,1):0.0;
 }
 
-// Calculate CRR (Current Run Rate)
-$totalOvers = $legalOvers + ($balls / 6);
-$currentData['score']['crr'] = $totalOvers > 0 ? round($score['runs'] / $totalOvers, 2) : 0.0;
+// Calculate CRR
+$totalOvers = $legalOvers + ($balls/6);
+$score['crr'] = $totalOvers>0 ? round($score['runs'] / $totalOvers,2):0.0;
 
-// Calculate RRR (Required Run Rate) if target exists
-if (isset($score['target']) && $score['target'] !== null && $score['targetOvers']) {
-    $runsLeft = $score['target'] - $score['runs'] + 1; // +1 needed to win
-    $totalBalls = intval($score['targetOvers']) * 6;
-    $ballsBowled = $legalOvers * 6 + $balls;
+// Calculate RRR
+if(isset($score['target']) && $score['target']!==null && isset($score['targetOvers']) && $score['targetOvers']>0){
+    $runsLeft = $score['target'] - $score['runs'] + 1;
+    $totalBalls = intval($score['targetOvers'])*6;
+    $ballsBowled = $legalOvers*6 + $balls;
     $ballsLeft = $totalBalls - $ballsBowled;
-    if ($ballsLeft > 0) {
-        $rrr = round($runsLeft / ($ballsLeft / 6), 2);
-    } else {
-        $rrr = 0.0;
-    }
-    $currentData['score']['rrr'] = $rrr;
+    $score['rrr'] = $ballsLeft>0 ? round($runsLeft/($ballsLeft/6),2):0.0;
 } else {
-    $currentData['score']['rrr'] = null;
+    $score['rrr'] = null;
 }
 
-// Automatic strike swap on over start
-// If previous ball‐part was non‑zero then new over started when balls becomes 0
-// But this logic depends on what the input overs are. Using simple check:
-if ($balls == 0 && intval($oversParts[1] ?? 0) != 0) {
-    $tmp = $currentData['score']['batsman1'];
-    $currentData['score']['batsman1'] = $currentData['score']['batsman2'];
-    $currentData['score']['batsman2'] = $tmp;
-}
+// Recalculate bowler economy
+$bowlerOversParts = explode(".", $score['bowler']['overs']);
+$bowlerLegalOvers = intval($bowlerOversParts[0]);
+$bowlerBalls = intval($bowlerOversParts[1] ?? 0);
+$totalBowlerOvers = $bowlerLegalOvers + ($bowlerBalls/6);
+$score['bowler']['eco'] = $totalBowlerOvers>0 ? round($score['bowler']['runs'] / $totalBowlerOvers,2):0.0;
+
+// Update main data
+$currentData['score'] = $score;
 
 // Save back to file
 file_put_contents($file, json_encode($currentData, JSON_PRETTY_PRINT));
 
 // Return success
-echo json_encode(['success'=>true, 'message'=>'Score updated successfully']);
+echo json_encode(['success'=>true,'message'=>'Score updated successfully']);
 exit;
-?>
-
